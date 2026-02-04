@@ -1,5 +1,14 @@
-// --- MASTER END-TO-END DEMO LOGIC ---
-const CLINICIAN_DETAILS = { name: 'Dr. Jane Foster, MD', clinic: 'MoveFitRx Clinical Group' };
+/**
+ * MoveFitRx Master Demo Logic - Build 5 Restored
+ * Restores: Email Modals, Binkey Payments, LMNs, and RWE Data Push
+ */
+
+const CLINICIAN_DETAILS = {
+    name: 'Dr. Jane Foster, MD',
+    clinic: 'MoveFitRx Clinical Group',
+    date: new Date().toLocaleDateString()
+};
+
 const DIAGNOSES = [
     { id: 'SMT', name: 'Symptomatic Menopausal Transition', regimen: 'Hormonal Balance & Strength', code: 'E89.0' },
     { id: 'HTN', name: 'Hypertension', regimen: 'Zone 2 Cardio + Resistance', code: 'I10' },
@@ -7,72 +16,117 @@ const DIAGNOSES = [
 ];
 
 const WORKOUT_DETAILS = {
-    'Hormonal Balance & Strength': { steps: [{ machine: 'Recumbent Bike', activity: 'Low Intensity Cardio 25 min' }, { machine: 'Leg Press', activity: '3 Sets x 12 Reps' }] },
-    'Zone 2 Cardio + Resistance': { steps: [{ machine: 'Treadmill', activity: 'Brisk Walk 30 min' }, { machine: 'Chest Press', activity: '3 Sets x 10 Reps' }] }
+    'Hormonal Balance & Strength': {
+        steps: [
+            { machine: 'Recumbent Bike', activity: 'Low Intensity Cardio 25 min' },
+            { machine: 'Leg Press', activity: '3 Sets x 12 Reps' }
+        ]
+    },
+    'Zone 2 Cardio + Resistance': {
+        steps: [
+            { machine: 'Treadmill', activity: 'Brisk Walk 30 min' },
+            { machine: 'Chest Press', activity: '3 Sets x 10 Reps' }
+        ]
+    }
 };
 
-let MOCK_CREDENTIALS = [{ matrixId: 'MFRX-AB001', gymAccessCode: '205101', used: false }];
+let MOCK_CREDENTIALS = [
+    { matrixId: 'MFRX-AB001', gymAccessCode: '205101', used: false },
+    { matrixId: 'MFRX-CD002', gymAccessCode: '205102', used: false }
+];
+
 let REFERRED_PATIENTS = []; 
 let PATIENT_RESULTS = []; 
 let PENDING_PATIENT_DATA = null;
 
-// --- UTILITIES ---
-function getPatientByMatrixId(id) { return REFERRED_PATIENTS.find(p => p.matrixId === id); }
+// --- MODAL UTILITIES ---
+window.closePatientWelcomeModal = () => {
+    document.getElementById('patient-welcome-modal').classList.add('hidden');
+};
 
-// --- WORKFLOW: CLINICIAN ---
-function setupDoctorPortal() {
-    const select = document.getElementById('diagnosis-select');
-    if (select) select.innerHTML = DIAGNOSES.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-    document.getElementById('referral-form').addEventListener('submit', handleReferral);
+function showPatientEmail(patient) {
+    const modal = document.getElementById('patient-welcome-modal');
+    const content = document.getElementById('patient-welcome-content');
+    content.innerHTML = `
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 class="text-xl font-bold text-blue-800 mb-2">Welcome to MoveFitRx</h3>
+            <p class="text-sm mb-4">Hello ${patient.name}, your prescription is ready. Use the code below to sign up.</p>
+            <div class="bg-white p-3 text-center border-2 border-blue-400 rounded-lg text-2xl font-black text-blue-600">
+                ${patient.matrixId}
+            </div>
+            <p class="text-xs mt-4 text-gray-500 italic text-center">Simulated invitation email sent to ${patient.email}</p>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    document.getElementById('matrix-id-input').value = patient.matrixId;
 }
 
-function handleReferral(e) {
-    e.preventDefault();
-    const cred = MOCK_CREDENTIALS.find(c => !c.used);
-    if (!cred) return alert("Out of Demo Codes");
-    cred.used = true;
+// --- CLINICIAN WORKFLOW ---
+function setupDoctorPortal() {
+    const select = document.getElementById('diagnosis-select');
+    if (select) {
+        select.innerHTML = DIAGNOSES.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    }
+    document.getElementById('referral-form').onsubmit = (e) => {
+        e.preventDefault();
+        const cred = MOCK_CREDENTIALS.find(c => !c.used);
+        if (!cred) return alert("All demo IDs are assigned.");
+        cred.used = true;
 
-    const dx = DIAGNOSES.find(d => d.id === e.target.diagnosis.value);
-    const patient = {
-        name: e.target.name.value,
-        email: e.target.email.value,
-        matrixId: cred.matrixId,
-        gymAccessCode: cred.gymAccessCode,
-        regimenName: dx.regimen,
-        status: 'PENDING_PAYMENT',
-        createdAt: Date.now()
+        const dx = DIAGNOSES.find(d => d.id === e.target.diagnosis.value);
+        const patient = {
+            name: e.target.name.value,
+            email: e.target.email.value,
+            matrixId: cred.matrixId,
+            gymAccessCode: cred.gymAccessCode,
+            regimenName: dx.regimen,
+            status: 'PENDING_PAYMENT',
+            createdAt: Date.now()
+        };
+
+        REFERRED_PATIENTS.unshift(patient);
+        renderDoctorPatientList();
+        
+        // AUTO-FLOW: Switch to patient portal and show the "Email"
+        window.switchTab('patient');
+        showPatientEmail(patient);
+        e.target.reset();
     };
-    REFERRED_PATIENTS.unshift(patient);
-    PENDING_PATIENT_DATA = patient;
-    
-    renderDoctorPatientList();
-    switchTab('patient'); // Auto-switch to simulate the email link click
 }
 
 function renderDoctorPatientList() {
     const list = document.getElementById('patients-list');
+    if (REFERRED_PATIENTS.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 italic">No active referrals.</p>';
+        return;
+    }
     list.innerHTML = REFERRED_PATIENTS.map(p => {
-        const completed = PATIENT_RESULTS.filter(r => r.patientMatrixId === p.matrixId).length;
-        const progress = Math.min(100, (completed / 6) * 100); // Demo assumes 6 total for 100%
+        const results = PATIENT_RESULTS.filter(r => r.id === p.matrixId).length;
+        const progress = Math.min(100, (results / 4) * 100); // 4 pushes for 100% demo
         return `
-            <div class="card border-l-4 ${p.status === 'PAID' ? 'border-green-500' : 'border-yellow-500'}">
-                <p class="font-bold">${p.name} <span class="text-xs text-gray-400">(${p.matrixId})</span></p>
-                <p class="text-xs font-bold text-emerald-600">${p.status === 'PAID' ? 'ACTIVE REGIMEN' : 'AWAITING PAYMENT'}</p>
-                <div class="w-full bg-gray-200 h-2 mt-2 rounded-full overflow-hidden">
-                    <div class="bg-emerald-500 h-full" style="width: ${progress}%"></div>
+            <div class="card bg-white border-l-4 ${p.status === 'PAID' ? 'border-green-500' : 'border-yellow-400'} mb-3">
+                <div class="flex justify-between">
+                    <span class="font-bold">${p.name}</span>
+                    <span class="text-[10px] font-bold ${p.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'}">${p.status}</span>
                 </div>
+                <div class="w-full bg-gray-100 h-2 rounded-full mt-2 overflow-hidden">
+                    <div class="bg-green-500 h-full transition-all" style="width: ${progress}%"></div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">ID: ${p.matrixId} | Adherence: ${progress}%</p>
             </div>
         `;
     }).join('');
 }
 
-// --- WORKFLOW: PATIENT & PAYMENT ---
+// --- PATIENT & RWE WORKFLOW ---
 function setupPatientPortal() {
-    document.getElementById('patient-search-form').addEventListener('submit', (e) => {
+    document.getElementById('patient-search-form').onsubmit = (e) => {
         e.preventDefault();
-        const patient = getPatientByMatrixId(document.getElementById('matrix-id-input').value.toUpperCase());
+        const id = document.getElementById('matrix-id-input').value.toUpperCase();
+        const patient = REFERRED_PATIENTS.find(p => p.matrixId === id);
         if (patient) renderPatientData(patient);
-    });
+        else alert("Invitation code not found.");
+    };
 }
 
 function renderPatientData(patient) {
@@ -81,53 +135,58 @@ function renderPatientData(patient) {
 
     if (patient.status === 'PENDING_PAYMENT') {
         display.innerHTML = `
-            <div class="card bg-blue-50 p-6 text-center">
-                <h3 class="font-bold text-blue-800">Prescription Ready</h3>
-                <p class="text-sm mb-4">Complete your Binkey HSA/FSA payment to unlock.</p>
-                <button onclick="simulatePayment('${patient.matrixId}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">PAY WITH HSA/FSA</button>
+            <div class="card bg-blue-50 border-2 border-blue-100 text-center p-6">
+                <h3 class="font-bold text-blue-800 text-xl mb-2">HSA/FSA Eligible Prescription</h3>
+                <p class="text-sm text-gray-600 mb-6">A Letter of Medical Necessity has been generated. Pay $99.00 to activate your gym access.</p>
+                <button onclick="simulateBinkeyPay('${patient.matrixId}')" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg">
+                    VERIFY & PAY WITH BINKEY
+                </button>
             </div>
         `;
     } else {
         const steps = WORKOUT_DETAILS[patient.regimenName].steps;
         display.innerHTML = `
-            <div class="card bg-green-50 mb-4">
-                <p class="font-bold">Access Code: ${patient.gymAccessCode}</p>
+            <div class="card bg-green-50 border-l-4 border-green-500 mb-6">
+                <p class="text-xs font-bold text-green-700 uppercase">Facility Access Code</p>
+                <p class="text-3xl font-black text-green-800">${patient.gymAccessCode}</p>
             </div>
-            <h4 class="font-bold mb-2">Prescribed Routine:</h4>
+            <h4 class="font-bold text-gray-800 mb-3">Your Prescribed Regimen</h4>
             ${steps.map(s => `
-                <div class="card bg-white border-l-4 border-blue-500 mb-2">
-                    <p class="font-bold text-sm">${s.machine}</p>
-                    <p class="text-xs">${s.activity}</p>
-                    <button onclick="simulatePush('${patient.matrixId}', '${s.machine}', '${s.activity}')" class="mt-2 text-[10px] bg-blue-500 text-white px-2 py-1 rounded">PUSH RWE DATA</button>
+                <div class="card bg-white border border-gray-200 mb-3">
+                    <p class="font-bold">${s.machine}</p>
+                    <p class="text-xs text-gray-500">${s.activity}</p>
+                    <button onclick="pushRWE('${patient.matrixId}', '${s.machine}')" class="mt-3 w-full bg-blue-500 text-white text-[10px] font-bold py-2 rounded uppercase tracking-widest">
+                        Trigger Workout Data Push
+                    </button>
                 </div>
             `).join('')}
         `;
     }
 }
 
-function simulatePayment(id) {
-    const p = getPatientByMatrixId(id);
+window.simulateBinkeyPay = (id) => {
+    const p = REFERRED_PATIENTS.find(p => p.matrixId === id);
     p.status = 'PAID';
-    alert("Binkey Payment Successful!");
+    alert("Binkey: HSA/FSA Eligibility Confirmed. Payment Successful!");
     renderPatientData(p);
-}
-
-function simulatePush(id, machine, activity) {
-    PATIENT_RESULTS.push({ patientMatrixId: id, machine, exercise: activity, completedAt: Date.now() });
-    alert("RWE Data Pushed to Clinician!");
     renderDoctorPatientList();
-}
+};
 
-// --- APP CORE ---
-window.switchTab = function(tab) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-    document.getElementById(`${tab}-panel`).classList.remove('hidden');
-    if (tab === 'patient' && PENDING_PATIENT_DATA) {
-        document.getElementById('patient-welcome-modal').classList.remove('hidden');
-        document.getElementById('patient-welcome-content').innerHTML = `<p class="font-bold">Invitation Code: ${PENDING_PATIENT_DATA.matrixId}</p>`;
-        document.getElementById('matrix-id-input').value = PENDING_PATIENT_DATA.matrixId;
-        PENDING_PATIENT_DATA = null;
-    }
-}
+window.pushRWE = (id, machine) => {
+    PATIENT_RESULTS.push({ id, machine, time: Date.now() });
+    alert(`Success: ${machine} data pushed to Clinician Dashboard!`);
+    renderDoctorPatientList();
+};
+
+// --- NAVIGATION & INIT ---
+window.switchTab = (tab) => {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`${tab}-tab`).classList.add('active');
+    document.getElementById(`${tab}-panel`).classList.add('active');
+    
+    const container = document.querySelector('.app-container');
+    if (tab === 'doctor') container.classList.add('doctor-view');
+    else container.classList.remove('doctor-view');
+};
 
 window.onload = () => { setupDoctorPortal(); setupPatientPortal(); };
