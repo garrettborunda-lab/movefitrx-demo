@@ -1,69 +1,97 @@
-const DIAGNOSES = [
-    { id: 'HTN', name: 'Hypertension', regimen: 'Zone 2 Cardio + Resistance', code: 'I10' },
-    { id: 'PRED', name: 'Pre-Diabetes', regimen: 'Metabolic Conditioning', code: 'R73.03' },
-    { id: 'DEPR', name: 'Depression', regimen: 'High-Intensity Intervals', code: 'F32.9' },
-    { id: 'SMT', name: 'Symptomatic Menopause', regimen: 'Strength & Hormonal Balance', code: 'E89.0' }
-];
+// --- MAIN APP INITIALIZATION AND NAVIGATION ---
 
-let REFERRED_PATIENTS = [
-    { name: 'Sarah Connor', email: 's.connor@sky.net', matrixId: 'MFRX-01', diagnosisId: 'HTN', status: 'PAID', adherence: 92 },
-    { name: 'John Doe', email: 'j.doe@example.com', matrixId: 'MFRX-02', diagnosisId: 'PRED', status: 'PENDING', adherence: 0 }
-];
-
-function switchTab(tab) {
-    const shell = document.getElementById('app-shell');
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+/**
+ * Switches between the Clinician, Patient, and Payment tabs/views.
+ * FLOW FIX: Stops and starts the correct observers based on the view.
+ */
+function switchTab(tabName, matrixId = null, patientName = null, paymentType = null) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
     
-    document.getElementById(`${tab}-panel`).classList.remove('hidden');
-    document.getElementById(`${tab}-panel`).classList.add('active');
+    stopAllObservers(); // Stop all observers first
 
-    // Toggle Desktop Width
-    if (tab === 'doctor') {
-        shell.classList.add('doctor-view');
+    // Handle button activation/view state
+    if (tabName !== 'payment') {
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+    document.getElementById(`${tabName}-panel`).classList.add('active');
+
+    const container = document.querySelector('.app-container');
+    if (tabName === 'doctor') {
+        container.classList.add('doctor-view');
+        // Hide patient progress view when switching back to main doctor list
+        document.getElementById('doctor-progress').classList.add('hidden'); 
+        startPatientListObserver(); // Start list observer
     } else {
-        shell.classList.remove('doctor-view');
+        container.classList.remove('doctor-view');
     }
-
-    // Update Tab UI
-    document.querySelectorAll('.tab-button').forEach(b => b.className = 'tab-button flex-1 py-4 text-center font-bold text-gray-500');
-    const activeTab = document.getElementById(`${tab}-tab`);
-    activeTab.className = 'tab-button active flex-1 py-4 text-center font-bold border-b-4 border-emerald-600 text-emerald-600';
-}
-
-function populateDiagnosisDropdown() {
-    const select = document.getElementById('diagnosis-select');
-    if (select) {
-        const options = DIAGNOSES.map(d => `<option value="${d.id}">${d.name} (${d.code})</option>`).join('');
-        select.innerHTML = `<option value="">Select a Diagnosis...</option>` + options;
+    
+    // Setup the payment form context if switching to payment
+    if (tabName === 'payment' && matrixId && patientName && paymentType) {
+        setupPaymentForm(matrixId, patientName, paymentType);
+    }
+    
+    // Show the welcome modal if referral data is pending and we switch to patient view
+    if (tabName === 'patient' && PENDING_PATIENT_DATA) {
+        showPatientWelcomeModal(PENDING_PATIENT_DATA);
     }
 }
 
-function renderPatientList() {
-    const list = document.getElementById('patients-list');
-    if (list) {
-        list.innerHTML = REFERRED_PATIENTS.map(p => `
-            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
-                <div class="flex justify-between items-center mb-3">
-                    <div>
-                        <span class="font-black text-gray-900 block">${p.name}</span>
-                        <span class="text-xs text-gray-400 font-mono">${p.matrixId} | ${p.email}</span>
-                    </div>
-                    <span class="text-[10px] px-2 py-1 rounded-full font-black tracking-tighter ${p.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${p.status}</span>
-                </div>
-                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden border border-gray-100">
-                    <div class="bg-emerald-500 h-full transition-all duration-1000" style="width: ${p.adherence}%"></div>
-                </div>
-                <div class="flex justify-between mt-2">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">Patient Adherence</span>
-                    <span class="text-xs font-black text-emerald-600">${p.adherence}%</span>
-                </div>
-            </div>
-        `).join('');
+/**
+ * Initial application setup function.
+ */
+function initializeApp() {
+    // Seed some mock patient data for immediate progress review:
+    const initialPatient1 = getAndMarkAvailableCredential();
+    const initialPatient2 = getAndMarkAvailableCredential();
+
+    if (initialPatient1) {
+        REFERRED_PATIENTS.push({
+            name: 'Sarah Connor',
+            email: 'sarah.connor@email.com',
+            diagnosisId: 'SMT',
+            regimenName: 'Hormonal Balance & Strength',
+            matrixId: initialPatient1.matrixId,
+            gymAccessCode: initialPatient1.gymAccessCode,
+            status: 'PAID', // Already paid
+            createdAt: Date.now() - 86400000 * 5, // 5 days ago
+        });
+        // Seed some mock RWE data for Sarah
+        PATIENT_RESULTS.push(
+            { patientMatrixId: initialPatient1.matrixId, machine: 'Recumbent Bike', exercise: 'Low Intensity Cardio 25 min', metrics: 'Distance: 1.5 mi, Avg HR: 130 BPM', completedAt: getMockPastDate().getTime() },
+            { patientMatrixId: initialPatient1.matrixId, machine: 'Leg Press', exercise: '3 Sets x 12 Reps', metrics: 'Weight: 60 lbs, Total Volume: 2160 lbs', completedAt: getMockPastDate().getTime() },
+            { patientMatrixId: initialPatient1.matrixId, machine: 'Diverging Seated Row', exercise: '3 Sets x 10 Reps', metrics: 'Weight: 45 lbs, Total Volume: 1350 lbs', completedAt: getMockPastDate().getTime() },
+            { patientMatrixId: initialPatient1.matrixId, machine: 'Recumbent Bike', exercise: 'Low Intensity Cardio 25 min', metrics: 'Distance: 1.6 mi, Avg HR: 132 BPM', completedAt: getMockPastDate().getTime() },
+            { patientMatrixId: initialPatient1.matrixId, machine: 'Leg Press', exercise: '3 Sets x 12 Reps', metrics: 'Weight: 60 lbs, Total Volume: 2160 lbs', completedAt: getMockPastDate().getTime() },
+        );
     }
+
+    if (initialPatient2) {
+        REFERRED_PATIENTS.push({
+            name: 'Jessica Jones',
+            email: 'jessica.jones@email.com',
+            diagnosisId: 'OSTE',
+            regimenName: 'Bone Density & Balance',
+            matrixId: initialPatient2.matrixId,
+            gymAccessCode: initialPatient2.gymAccessCode,
+            status: 'PENDING_PAYMENT', // Still pending payment
+            createdAt: Date.now() - 86400000 * 2, // 2 days ago
+        });
+    }
+
+    // Perform initial UI setups and start the main observer
+    setupDoctorPortal(); // This starts the list observer
+    setupPatientPortal();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    populateDiagnosisDropdown();
-    renderPatientList();
-});
+// Attach the main initialization function to the window load event
+window.onload = initializeApp;
+
+// --- FIX: Expose necessary functions globally for HTML attributes (onclick) and data access ---
+window.switchTab = switchTab;
+window.DIAGNOSES = DIAGNOSES;
+// Ensure all window functions needed by HTML elements are exposed (they already were, but including them here is safer)
+window.closeLMNModal = closeLMNModal;
+window.closePatientWelcomeModal = closePatientWelcomeModal;
+window.openLMNModal = openLMNModal;
+window.showDoctorProgress = showDoctorProgress;
