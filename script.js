@@ -6,9 +6,30 @@ const DIAGNOSES = [
 ];
 
 let REFERRED_PATIENTS = [
-    { name: 'Sarah Connor', matrixId: 'MFRX-01', diagnosisId: 'HTN', status: 'PAID', adherence: 92 },
-    { name: 'John Doe', matrixId: 'MFRX-02', diagnosisId: 'PRED', status: 'PENDING', adherence: 0 }
+    { name: 'Sarah Connor', email: 's.connor@sky.net', matrixId: 'MFRX-01', diagnosisId: 'HTN', status: 'PAID', adherence: 92 },
+    { name: 'John Doe', email: 'j.doe@example.com', matrixId: 'MFRX-02', diagnosisId: 'PRED', status: 'PENDING', adherence: 0 }
 ];
+
+function switchTab(tab) {
+    const shell = document.getElementById('app-shell');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+    
+    document.getElementById(`${tab}-panel`).classList.remove('hidden');
+    document.getElementById(`${tab}-panel`).classList.add('active');
+
+    // Toggle Desktop Width
+    if (tab === 'doctor') {
+        shell.classList.add('doctor-view');
+    } else {
+        shell.classList.remove('doctor-view');
+    }
+
+    // Update Tab UI
+    document.querySelectorAll('.tab-button').forEach(b => b.className = 'tab-button flex-1 py-4 text-center font-bold text-gray-500');
+    const activeTab = document.getElementById(`${tab}-tab`);
+    activeTab.className = 'tab-button active flex-1 py-4 text-center font-bold border-b-4 border-emerald-600 text-emerald-600';
+}
 
 function populateDiagnosisDropdown() {
     const select = document.getElementById('diagnosis-select');
@@ -22,25 +43,24 @@ function renderPatientList() {
     const list = document.getElementById('patients-list');
     if (list) {
         list.innerHTML = REFERRED_PATIENTS.map(p => `
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold text-gray-800">${p.name}</span>
-                    <span class="text-xs px-2 py-1 rounded bg-gray-100 font-bold">${p.status}</span>
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <span class="font-black text-gray-900 block">${p.name}</span>
+                        <span class="text-xs text-gray-400 font-mono">${p.matrixId} | ${p.email}</span>
+                    </div>
+                    <span class="text-[10px] px-2 py-1 rounded-full font-black tracking-tighter ${p.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${p.status}</span>
                 </div>
-                <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                    <div class="bg-emerald-500 h-full" style="width: ${p.adherence}%"></div>
+                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden border border-gray-100">
+                    <div class="bg-emerald-500 h-full transition-all duration-1000" style="width: ${p.adherence}%"></div>
                 </div>
-                <div class="text-right text-xs mt-1 font-bold text-emerald-600">${p.adherence}% Adherence</div>
+                <div class="flex justify-between mt-2">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Patient Adherence</span>
+                    <span class="text-xs font-black text-emerald-600">${p.adherence}%</span>
+                </div>
             </div>
         `).join('');
     }
-}
-
-function switchTab(tab) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-    document.getElementById(`${tab}-panel`).classList.remove('hidden');
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active', 'text-emerald-600', 'border-b-4', 'border-emerald-600'));
-    document.getElementById(`${tab}-tab`).classList.add('active', 'text-emerald-600', 'border-b-4', 'border-emerald-600');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
