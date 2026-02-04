@@ -1,6 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
 body { font-family: 'Inter', sans-serif; }
+
+.app-container {
+    width: 100%;
+    max-width: 450px; /* Default Mobile Width */
+}
+
+/* DESKTOP OPTIMIZATION: Expands the dashboard when in doctor-view */
+@media (min-width: 1024px) {
+    .app-container.doctor-view {
+        max-width: 1100px;
+        margin-top: 2rem;
+        border-radius: 1.5rem;
+    }
+}
+
 .color-primary-green { color: #059669; }
 .bg-primary-green { background-color: #059669; }
 .color-secondary-blue { color: #2563eb; }
 .bg-secondary-blue { background-color: #2563eb; }
-.tab-button.active { border-bottom: 4px solid #059669; color: #059669; }
+
+.tab-button.active { color: #059669; border-bottom: 4px solid #059669; }
+
+.panel { display: none; }
+.panel.active { display: block; }
