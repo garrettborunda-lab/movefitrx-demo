@@ -1,49 +1,66 @@
-/**
- * MoveFitRx Master Build 7 - Restored Logic Engine
- * End-to-End Simulation: Referral -> Email -> Binkey -> RWE -> Doctor Progress
- */
-
-// --- CORE DATA ---
-const CLINICIAN_DETAILS = { name: 'Dr. Jane Foster, MD', clinic: 'MoveFitRx Clinical Group' };
+// MoveFitRx Build 7 - THE "SANDLOT" FIX
 const DIAGNOSES = [
     { id: 'SMT', name: 'Symptomatic Menopausal Transition', regimen: 'Hormonal Balance & Strength', code: 'E89.0' },
     { id: 'HTN', name: 'Hypertension', regimen: 'Zone 2 Cardio + Resistance', code: 'I10' },
-    { id: 'PRED', name: 'Pre-Diabetes', regimen: 'Metabolic Conditioning', code: 'R73.03' }
+    { id: 'PRED', name: 'Pre-Diabetes', regimen: 'Metabolic Conditioning', code: 'R73.03' },
+    { id: 'OSTP', name: 'Osteopenia', regimen: 'Bone Density & Balance', code: 'M85.8' }
 ];
 
 const WORKOUT_DETAILS = {
     'Hormonal Balance & Strength': { steps: [{ m: 'Recumbent Bike', a: '25 min Cardio' }, { m: 'Leg Press', a: '3x12 Reps' }] },
     'Zone 2 Cardio + Resistance': { steps: [{ m: 'Treadmill', a: '30 min Walk' }, { m: 'Chest Press', a: '3x10 Reps' }] },
-    'Metabolic Conditioning': { steps: [{ m: 'Elliptical', a: '20 min Intervals' }, { m: 'Squats', a: '3x15 Reps' }] }
+    'Bone Density & Balance': { steps: [{ m: 'Treadmill', a: '20 min Walk' }, { m: 'Calf Extension', a: '3x15 Reps' }] }
 };
 
 let MOCK_CREDENTIALS = [{ matrixId: 'MFRX-AB001', gymAccessCode: '205101', used: false }, { matrixId: 'MFRX-CD002', gymAccessCode: '205102', used: false }];
 let REFERRED_PATIENTS = []; 
 let PATIENT_RESULTS = []; 
 
-// --- CLINICIAN WORKFLOW ---
-function setupDoctorPortal() {
+// --- THE CORE FIX: POPULATE DROPDOWN ---
+function populateDiagnosisDropdown() {
     const select = document.getElementById('diagnosis-select');
     if (select) {
         select.innerHTML = DIAGNOSES.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+        console.log("Dropdown populated with " + DIAGNOSES.length + " options.");
+    } else {
+        console.error("CRITICAL: Could not find element with ID 'diagnosis-select'");
     }
-    document.getElementById('referral-form').onsubmit = function(e) {
-        e.preventDefault();
-        const cred = MOCK_CREDENTIALS.find(c => !c.used);
-        if (!cred) return alert("Demo Limit Reached");
-        cred.used = true;
-        const dx = DIAGNOSES.find(d => d.id === this.diagnosis.value);
-        const patient = { name: this.name.value, email: this.email.value, matrixId: cred.matrixId, gymAccessCode: cred.gymAccessCode, regimenName: dx.regimen, status: 'PENDING_PAYMENT', createdAt: Date.now() };
-        REFERRED_PATIENTS.unshift(patient);
-        renderDoctorPatientList();
-        window.switchTab('patient');
-        showEmailModal(patient);
-        this.reset();
-    };
+}
+
+// --- CLINICIAN WORKFLOW ---
+function setupDoctorPortal() {
+    populateDiagnosisDropdown(); // Run immediately
+    const form = document.getElementById('referral-form');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const cred = MOCK_CREDENTIALS.find(c => !c.used);
+            if (!cred) return alert("Demo: No more IDs available.");
+            cred.used = true;
+
+            const dx = DIAGNOSES.find(d => d.id === this.diagnosis.value);
+            const patient = { 
+                name: this.name.value, 
+                email: this.email.value, 
+                matrixId: cred.matrixId, 
+                gymAccessCode: cred.gymAccessCode, 
+                regimenName: dx.regimen, 
+                status: 'PENDING_PAYMENT', 
+                createdAt: Date.now() 
+            };
+            
+            REFERRED_PATIENTS.unshift(patient);
+            renderDoctorPatientList();
+            window.switchTab('patient');
+            showEmailModal(patient);
+            this.reset();
+        };
+    }
 }
 
 function renderDoctorPatientList() {
     const list = document.getElementById('patients-list');
+    if (!list) return;
     list.innerHTML = REFERRED_PATIENTS.map(p => {
         const count = PATIENT_RESULTS.filter(r => r.id === p.matrixId).length;
         const progress = Math.min(100, (count / 4) * 100);
@@ -60,13 +77,16 @@ function renderDoctorPatientList() {
 
 // --- PATIENT WORKFLOW ---
 function setupPatientPortal() {
-    document.getElementById('patient-search-form').onsubmit = function(e) {
-        e.preventDefault();
-        const id = document.getElementById('matrix-id-input').value.trim().toUpperCase();
-        const patient = REFERRED_PATIENTS.find(p => p.matrixId === id);
-        if (patient) renderPatientDashboard(patient);
-        else alert("Code Not Found");
-    };
+    const form = document.getElementById('patient-search-form');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('matrix-id-input').value.trim().toUpperCase();
+            const patient = REFERRED_PATIENTS.find(p => p.matrixId === id);
+            if (patient) renderPatientDashboard(patient);
+            else alert("Invitation code not found.");
+        };
+    }
 }
 
 function renderPatientDashboard(patient) {
@@ -76,7 +96,6 @@ function renderPatientDashboard(patient) {
         display.innerHTML = `
             <div class="card bg-blue-50 border-2 border-blue-100 p-6 text-center rounded-xl">
                 <h3 class="font-bold text-blue-800 text-lg mb-2">HSA/FSA Payment Required</h3>
-                <p class="text-xs text-gray-500 mb-6 italic">Letter of Medical Necessity Generated</p>
                 <button onclick="runBinkeySim('${patient.matrixId}')" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg">VERIFY & PAY WITH BINKEY</button>
             </div>`;
     } else {
@@ -95,11 +114,13 @@ function renderPatientDashboard(patient) {
     }
 }
 
-// --- SIMULATION HELPERS ---
+// --- GLOBAL HELPERS ---
 window.switchTab = (t) => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById(`${t}-tab`).classList.add('active');
-    document.getElementById(`${t}-panel`).classList.add('active');
+    const targetTab = document.getElementById(`${t}-tab`);
+    const targetPanel = document.getElementById(`${t}-panel`);
+    if (targetTab) targetTab.classList.add('active');
+    if (targetPanel) targetPanel.classList.add('active');
     const shell = document.querySelector('.app-container');
     if (t === 'doctor') shell.classList.add('doctor-view'); else shell.classList.remove('doctor-view');
 };
@@ -117,15 +138,19 @@ function showEmailModal(p) {
 window.runBinkeySim = (id) => {
     const p = REFERRED_PATIENTS.find(p => p.matrixId === id);
     p.status = 'PAID';
-    alert("Binkey: HSA/FSA Eligibility Confirmed!");
+    alert("Binkey: Payment Successful!");
     renderPatientDashboard(p);
     renderDoctorPatientList();
 };
 
 window.runPushSim = (id, machine) => {
     PATIENT_RESULTS.push({ id, machine, time: Date.now() });
-    alert(`Data from ${machine} pushed to MoveFitRx Cloud.`);
+    alert(`Data from ${machine} pushed to Clinician Dashboard.`);
     renderDoctorPatientList();
 };
 
-window.onload = () => { setupDoctorPortal(); setupPatientPortal(); };
+// --- START ---
+document.addEventListener('DOMContentLoaded', () => {
+    setupDoctorPortal();
+    setupPatientPortal();
+});
