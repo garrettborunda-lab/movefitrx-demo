@@ -517,3 +517,4 @@ function setupDoctorPortal() {
  */
 function processPaymentSimulation(patientMatrixId) {
     const patient = REFERRED_PATIENTS
+    }
