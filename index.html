@@ -3,84 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoveFitRx | Prescriptive Fitness POC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>MoveFitRx | POC 8.5</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; }
+        nav { background: white; display: flex; justify-content: space-around; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        nav button { padding: 15px; border: none; background: none; font-weight: bold; cursor: pointer; color: #666; text-transform: uppercase; font-size: 12px; }
+        nav button.active { color: #2563eb; border-bottom: 3px solid #2563eb; }
+        main { max-width: 800px; margin: 20px auto; padding: 0 20px; }
         .panel { display: none; }
         .panel.active { display: block; }
-        .nav-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; }
-        .card { transition: all 0.3s ease; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid #ddd; }
+        .form-box { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button.primary { background: #2563eb; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .progress-bg { background: #e5e7eb; height: 8px; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: #2563eb; height: 100%; transition: width 0.5s; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-12">
+<body>
 
-    <nav class="bg-white shadow-sm sticky top-0 z-40 mb-6">
-        <div class="max-w-4xl mx-auto flex justify-around">
-            <button onclick="switchTab('doctor')" class="nav-btn p-4 font-bold active uppercase tracking-wider text-sm transition-all">
-                <i class="fas fa-user-md mr-2"></i>Clinician Portal
-            </button>
-            <button onclick="switchTab('patient')" class="nav-btn p-4 font-bold uppercase tracking-wider text-sm transition-all">
-                <i class="fas fa-user mr-2"></i>Patient Portal
-            </button>
+<nav>
+    <button id="btn-doctor" onclick="switchTab('doctor')" class="active">Clinician Portal</button>
+    <button id="btn-patient" onclick="switchTab('patient')">Patient Portal</button>
+</nav>
+
+<main>
+    <div id="doctor-panel" class="panel active">
+        <div class="form-box">
+            <h2 style="margin-top:0">Refer New Patient</h2>
+            <form id="referral-form">
+                <input type="text" name="name" placeholder="Patient Name" required>
+                <input type="email" name="email" placeholder="Email Address" required>
+                <select id="diagnosis-select" name="diagnosis"></select>
+                <button type="submit" class="primary">Generate Prescription</button>
+            </form>
         </div>
-    </nav>
+        <div id="patients-list"></div>
+    </div>
 
-    <main class="max-w-4xl mx-auto p-4">
-
-        <div id="doctor-panel" class="panel active">
-            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mb-8">
-                <div class="flex items-center mb-6">
-                    <div class="bg-blue-100 p-3 rounded-lg mr-4">
-                        <i class="fas fa-file-prescription text-blue-600 text-xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-black text-gray-800">Prescribe Exercise</h2>
-                        <p class="text-gray-500 text-sm italic">Clinical corrective logic for medical fitness.</p>
-                    </div>
-                </div>
-                
-                <form id="referral-form" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="name" placeholder="Patient Full Name" class="p-4 bg-gray-50 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-blue-500 outline-none transition" required>
-                        <input type="email" name="email" placeholder="Email Address" class="p-4 bg-gray-50 border border-gray-200 rounded-xl w-full focus:ring-2 focus:ring-blue-500 outline-none transition" required>
-                    </div>
-                    <select id="diagnosis-select" name="diagnosis" class="p-4 bg-gray-50 border border-gray-200 rounded-xl w-full font-semibold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition">
-                        </select>
-                    <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 transform hover:-translate-y-0.5 active:translate-y-0 transition-all">
-                        Generate & Send Prescription
-                    </button>
-                </form>
-            </div>
-
-            <h3 class="font-black text-gray-400 mb-4 uppercase tracking-[0.2em] text-xs px-2 flex justify-between">
-                <span>Active Oversight</span>
-                <span class="text-blue-500">Real-Time Evidence (RWE)</span>
-            </h3>
-            <div id="patients-list" class="space-y-4 px-1">
-                </div>
+    <div id="patient-panel" class="panel">
+        <div id="login-section" class="form-box" style="text-align:center">
+            <h2>Patient Access</h2>
+            <p style="color:#666">Enter Invitation Code</p>
+            <form id="login-form">
+                <input type="text" name="matrixId" placeholder="MFRX-XXXX" style="text-align:center; font-family:monospace; font-size: 20px;" required>
+                <button type="submit" class="primary" style="margin-top:15px">Access Plan</button>
+            </form>
         </div>
+        <div id="patient-dashboard" style="display:none">
+            <div id="dashboard-content"></div>
+        </div>
+    </div>
+</main>
 
-        <div id="patient-panel" class="panel">
-            <div id="patient-login-section" class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md mx-auto border border-gray-50">
-                <div class="mb-8">
-                    <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-lock text-3xl"></i>
-                    </div>
-                    <h2 class="text-3xl font-black text-gray-800 mb-2">Patient Access</h2>
-                    <p class="text-gray-500 px-4">Enter the Invitation Code provided by your clinician to view your prescription.</p>
-                </div>
-                <form id="patient-login-form" class="space-y-5">
-                    <input type="text" name="matrixId" placeholder="MFRX-XXXX" class="p-5 border-2 border-gray-100 rounded-2xl w-full text-center font-mono text-2xl tracking-widest focus:border-blue-500 outline-none uppercase" required>
-                    <button type="submit" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-blue-700 transition">
-                        Access My Plan
-                    </button>
-                </form>
-            </div>
+<div id="modal-success" class="modal">
+    <div class="modal-content">
+        <h3 style="color:green">Referral Sent!</h3>
+        <p>Prescription created successfully.</p>
+        <button onclick="closeSuccess()" class="primary">Continue</button>
+    </div>
+</div>
 
-            <div id="patient-dashboard" class="hidden">
-                <div id="patient-dashboard-content">
-                    </div>
-            </div>
+<div id="modal-welcome" class="modal">
+    <div class="modal-content">
+        <h3>Prescription Ready</h3>
+        <p>Access Code: <strong id="show-id" style="color:#2563eb; font-size:24px"></strong></p>
+        <button onclick="closeWelcome()" class="primary">Open Dashboard</button>
+    </div>
+</div>
+
+<script src="script.js?v=85"></script>
+</body>
+</html>
