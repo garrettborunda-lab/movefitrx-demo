@@ -532,7 +532,6 @@ function switchTab(tab) {
     
     document.getElementById(`${tab}-panel`).classList.add('active');
     
-    // Find the button with the matching onclick attribute
     const activeButton = document.querySelector(`[onclick="switchTab('${tab}')"]`);
     if (activeButton) activeButton.classList.add('active');
 
@@ -591,10 +590,9 @@ function initializeApp() {
 }
 
 // --- THE IGNITION SWITCH ---
-// This tells the browser to run the code after the HTML is ready.
 document.addEventListener('DOMContentLoaded', initializeApp);
 
-// Expose functions to the global 'window' so HTML buttons can find them.
+// Expose functions to global window for HTML onclick attributes
 window.switchTab = switchTab;
 window.handleReferral = handleReferral;
 window.DIAGNOSES = DIAGNOSES;
