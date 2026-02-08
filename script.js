@@ -518,3 +518,13 @@ function setupDoctorPortal() {
 function processPaymentSimulation(patientMatrixId) {
     const patient = REFERRED_PATIENTS
     }
+// --- LINE 521 STARTS HERE ---
+
+// 1. Attach the main initialization function to the browser load event
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// 2. Expose necessary functions to the global 'window' object 
+// This ensures your HTML buttons (onclick="switchTab(...)") can find the code.
+window.switchTab = switchTab;
+window.handleReferral = handleReferral;
+window.DIAGNOSES = DIAGNOSES;
