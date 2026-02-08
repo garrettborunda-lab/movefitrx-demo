@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoveFitRx | Build 8.6</title>
+    <title>MoveFitRx | Build 8.7 Verified</title>
     <style>
         :root { --blue: #2563eb; --green: #10b981; --yellow: #f59e0b; --gray: #64748b; }
         body { font-family: -apple-system, sans-serif; background: #f8fafc; margin: 0; color: #1e293b; }
@@ -13,17 +13,16 @@
         main { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .panel { display: none; }
         .panel.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid #cbd5e1; position: relative; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid #cbd5e1; }
         .form-box { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 30px; }
-        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; transition: border 0.2s; }
-        input:focus { border-color: var(--blue); outline: none; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; }
         button.primary { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; }
         .progress-bg { background: #f1f5f9; height: 10px; border-radius: 5px; margin: 12px 0; overflow: hidden; }
         .progress-fill { background: var(--blue); height: 100%; transition: width 0.8s ease-in-out; }
         .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
         .modal-content { background: white; padding: 40px; border-radius: 24px; max-width: 450px; width: 100%; text-align: center; border-top: 8px solid var(--blue); }
-        .lmn-paper { font-family: "Times New Roman", serif; text-align: left; padding: 20px; border: 1px solid #ddd; background: #fff; }
+        .lmn-paper { font-family: "Times New Roman", serif; text-align: left; padding: 20px; border: 1px solid #ddd; background: #fff; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -36,25 +35,24 @@
 <main>
     <div id="doctor-panel" class="panel active">
         <div class="form-box">
-            <h2 style="margin:0 0 20px 0; color: #0f172a;">Prescribe Corrective Exercise</h2>
+            <h2 style="margin:0 0 20px 0;">Refer Patient</h2>
             <form id="referral-form">
-                <input type="text" name="name" placeholder="Patient Name" required>
-                <input type="email" name="email" placeholder="Email Address" required>
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="email" name="email" placeholder="Email" required>
                 <select id="diagnosis-select" name="diagnosis"></select>
-                <button type="submit" class="primary">Send Prescription</button>
+                <button type="submit" class="primary">Issue Prescription</button>
             </form>
         </div>
-        <h3 style="color:var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 15px;">Active Patient Oversight (RWE)</h3>
+        <h3 style="color:var(--gray); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Clinical Oversight Dashboard</h3>
         <div id="patients-list"></div>
     </div>
 
     <div id="patient-panel" class="panel">
         <div id="login-section" class="form-box" style="text-align:center">
-            <h2 style="margin-top:0">Secure Access</h2>
-            <p style="color:var(--gray); margin-bottom: 25px;">Enter your Invitation Code to view your medical regimen.</p>
+            <h2>Patient Access</h2>
             <form id="login-form">
-                <input type="text" name="matrixId" placeholder="MFRX-XXXX" style="text-align:center; font-family:monospace; font-size: 24px; border-width: 2px;" required>
-                <button type="submit" class="primary" style="margin-top:20px">Access My Plan</button>
+                <input type="text" name="matrixId" placeholder="MFRX-XXXX" style="text-align:center; font-family:monospace; font-size: 22px;" required>
+                <button type="submit" class="primary" style="margin-top:20px">Access Regimen</button>
             </form>
         </div>
         <div id="patient-dashboard" style="display:none">
@@ -65,27 +63,27 @@
 
 <div id="modal-success" class="modal">
     <div class="modal-content">
-        <h2 style="color:var(--green); margin-top:0;">Referral Created</h2>
-        <p style="color:var(--gray)">The exercise prescription and secure access code have been generated.</p>
-        <button onclick="closeSuccess()" class="primary">Continue to Hand-off</button>
+        <h2 style="color:var(--green); margin-top:0;">Prescription Sent</h2>
+        <p>The corrective exercise logic has been pushed to the patient.</p>
+        <button onclick="closeSuccessAndSwitch()" class="primary">Launch Hand-off</button>
     </div>
 </div>
 
 <div id="modal-welcome" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0">Prescription Received</h2>
-        <p>Hello <span id="welcome-name" style="font-weight:bold"></span>, your code is:</p>
+        <h2>Regimen Ready</h2>
+        <p>Hello <span id="welcome-name" style="font-weight:bold"></span>, use this code:</p>
         <div style="background:#f1f5f9; padding: 20px; border-radius: 12px; margin: 20px 0;">
             <span id="show-id" style="color:var(--blue); font-size:32px; font-family:monospace; font-weight:900;"></span>
         </div>
-        <button onclick="closeWelcome()" class="primary">Open Dashboard</button>
+        <button onclick="closeWelcome()" class="primary">Enter Dashboard</button>
     </div>
 </div>
 
 <div id="modal-action" class="modal">
-    <div class="modal-content" id="action-content" style="text-align:left; max-width: 500px;"></div>
+    <div class="modal-content" id="action-content" style="max-width: 500px;"></div>
 </div>
 
-<script src="script.js?v=86"></script>
+<script src="script.js?v=8.7_FINAL"></script>
 </body>
 </html>
