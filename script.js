@@ -518,13 +518,21 @@ function setupDoctorPortal() {
 function processPaymentSimulation(patientMatrixId) {
     const patient = REFERRED_PATIENTS
     }
-// --- LINE 521 STARTS HERE ---
+// --- REPLACE EVERYTHING FROM LINE 521 TO THE END WITH THIS ---
+
+/**
+ * Main initialization function to seed data and set up portals.
+ */
+function initializeApp() {
+    console.log("MoveFitRx: Initializing Build 7...");
+    initializeState(); // This is the function that creates Sarah and Jessica
+    setupDoctorPortal(); // This sets up the dropdown and the list
+}
 
 // 1. Attach the main initialization function to the browser load event
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 // 2. Expose necessary functions to the global 'window' object 
-// This ensures your HTML buttons (onclick="switchTab(...)") can find the code.
 window.switchTab = switchTab;
 window.handleReferral = handleReferral;
 window.DIAGNOSES = DIAGNOSES;
