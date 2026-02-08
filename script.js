@@ -507,92 +507,46 @@ function setupDoctorPortal() {
     
     // Initial render of the patient list
     renderDoctorPatientList();
-/**
- * Simulates a successful payment by updating the patient status in the local array.
- */
-function processPaymentSimulation(patientMatrixId) {
-    const patient = getPatientByMatrixId(patientMatrixId);
-    if (patient) {
-        patient.status = 'PAID';
-        return true;
-    }
+function processPaymentSimulation(pId) {
+    const p = getPatientByMatrixId(pId);
+    if (p) { p.status = 'PAID'; return true; }
     return false;
 }
 
-/**
- * Switches between 'doctor' and 'patient' tabs.
- */
-function switchTab(tab) {
+function switchTab(t) {
     stopAllObservers();
-    const panels = document.querySelectorAll('.panel');
-    const navButtons = document.querySelectorAll('.nav-btn');
-    
-    panels.forEach(p => p.classList.remove('active'));
-    navButtons.forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(`${tab}-panel`).classList.add('active');
-    
-    const activeButton = document.querySelector(`[onclick="switchTab('${tab}')"]`);
-    if (activeButton) activeButton.classList.add('active');
-
-    if (tab === 'doctor') {
-        setupDoctorPortal();
-    }
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`${t}-panel`).classList.add('active');
+    const btn = document.querySelector(`[onclick="switchTab('${t}')"]`);
+    if (btn) btn.classList.add('active');
+    if (t === 'doctor') setupDoctorPortal();
 }
 
-/**
- * Seeds the initial mock data (Sarah and Jessica) into the local array.
- */
 function initializeState() {
     if (REFERRED_PATIENTS.length === 0) {
-        const initialPatient1 = getAndMarkAvailableCredential();
-        const initialPatient2 = getAndMarkAvailableCredential();
-
-        if (initialPatient1) {
-            REFERRED_PATIENTS.push({
-                name: 'Sarah Connor',
-                email: 's.connor@sky.net',
-                diagnosisId: 'HYPT',
-                regimenName: 'Cardio Vascular Health',
-                matrixId: initialPatient1.matrixId,
-                gymAccessCode: initialPatient1.gymAccessCode,
-                status: 'PAID',
-                createdAt: Date.now() - (86400000 * 5)
-            });
-            
-            PATIENT_RESULTS.push(
-                { patientMatrixId: initialPatient1.matrixId, machine: 'Treadmill', exercise: 'Aerobic Walk', completedAt: new Date() }
-            );
-        }
-
-        if (initialPatient2) {
-            REFERRED_PATIENTS.push({
-                name: 'Jessica Jones',
-                email: 'j.jones@alias.com',
-                diagnosisId: 'OSTE',
-                regimenName: 'Bone Density & Balance',
-                matrixId: initialPatient2.matrixId,
-                gymAccessCode: initialPatient2.gymAccessCode,
-                status: 'PENDING_PAYMENT',
-                createdAt: Date.now() - (86400000 * 2)
-            });
-        }
+        const c1 = getAndMarkAvailableCredential();
+        const c2 = getAndMarkAvailableCredential();
+        REFERRED_PATIENTS.push({
+            name: 'Sarah Connor', email: 's.connor@sky.net', diagnosisId: 'HYPT',
+            regimenName: 'Cardio Vascular Health', matrixId: c1.matrixId,
+            gymAccessCode: c1.gymAccessCode, status: 'PAID', createdAt: Date.now() - 432000000
+        });
+        REFERRED_PATIENTS.push({
+            name: 'Jessica Jones', email: 'j.jones@alias.com', diagnosisId: 'OSTE',
+            regimenName: 'Bone Density & Balance', matrixId: c2.matrixId,
+            gymAccessCode: c2.gymAccessCode, status: 'PENDING_PAYMENT', createdAt: Date.now() - 172800000
+        });
     }
 }
 
-/**
- * Main initialization function to seed data and set up portals.
- */
 function initializeApp() {
-    console.log("MoveFitRx: Initializing Build 7...");
+    console.log("POC ACTIVE");
     initializeState();
     setupDoctorPortal();
 }
 
-// --- THE IGNITION SWITCH ---
 document.addEventListener('DOMContentLoaded', initializeApp);
-
-// Expose functions to global window for HTML onclick attributes
 window.switchTab = switchTab;
 window.handleReferral = handleReferral;
 window.DIAGNOSES = DIAGNOSES;
