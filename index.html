@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoveFitRx | POC 8.5</title>
+    <title>MoveFitRx | Build 8.6</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f4f6; margin: 0; }
-        nav { background: white; display: flex; justify-content: space-around; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        nav button { padding: 15px; border: none; background: none; font-weight: bold; cursor: pointer; color: #666; text-transform: uppercase; font-size: 12px; }
-        nav button.active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        main { max-width: 800px; margin: 20px auto; padding: 0 20px; }
+        :root { --blue: #2563eb; --green: #10b981; --yellow: #f59e0b; --gray: #64748b; }
+        body { font-family: -apple-system, sans-serif; background: #f8fafc; margin: 0; color: #1e293b; }
+        nav { background: white; display: flex; justify-content: center; gap: 40px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
+        nav button { padding: 18px 10px; border: none; background: none; font-weight: 700; cursor: pointer; color: var(--gray); text-transform: uppercase; font-size: 13px; letter-spacing: 0.05em; }
+        nav button.active { color: var(--blue); border-bottom: 3px solid var(--blue); }
+        main { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .panel { display: none; }
         .panel.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid #ddd; }
-        .form-box { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button.primary { background: #2563eb; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .progress-bg { background: #e5e7eb; height: 8px; border-radius: 4px; margin: 10px 0; overflow: hidden; }
-        .progress-fill { background: #2563eb; height: 100%; transition: width 0.5s; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid #cbd5e1; position: relative; }
+        .form-box { background: white; padding: 30px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 30px; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; transition: border 0.2s; }
+        input:focus { border-color: var(--blue); outline: none; }
+        button.primary { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; }
+        .progress-bg { background: #f1f5f9; height: 10px; border-radius: 5px; margin: 12px 0; overflow: hidden; }
+        .progress-fill { background: var(--blue); height: 100%; transition: width 0.8s ease-in-out; }
+        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; }
+        .modal-content { background: white; padding: 40px; border-radius: 24px; max-width: 450px; width: 100%; text-align: center; border-top: 8px solid var(--blue); }
+        .lmn-paper { font-family: "Times New Roman", serif; text-align: left; padding: 20px; border: 1px solid #ddd; background: #fff; }
     </style>
 </head>
 <body>
@@ -33,24 +36,25 @@
 <main>
     <div id="doctor-panel" class="panel active">
         <div class="form-box">
-            <h2 style="margin-top:0">Refer New Patient</h2>
+            <h2 style="margin:0 0 20px 0; color: #0f172a;">Prescribe Corrective Exercise</h2>
             <form id="referral-form">
                 <input type="text" name="name" placeholder="Patient Name" required>
                 <input type="email" name="email" placeholder="Email Address" required>
                 <select id="diagnosis-select" name="diagnosis"></select>
-                <button type="submit" class="primary">Generate Prescription</button>
+                <button type="submit" class="primary">Send Prescription</button>
             </form>
         </div>
+        <h3 style="color:var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 15px;">Active Patient Oversight (RWE)</h3>
         <div id="patients-list"></div>
     </div>
 
     <div id="patient-panel" class="panel">
         <div id="login-section" class="form-box" style="text-align:center">
-            <h2>Patient Access</h2>
-            <p style="color:#666">Enter Invitation Code</p>
+            <h2 style="margin-top:0">Secure Access</h2>
+            <p style="color:var(--gray); margin-bottom: 25px;">Enter your Invitation Code to view your medical regimen.</p>
             <form id="login-form">
-                <input type="text" name="matrixId" placeholder="MFRX-XXXX" style="text-align:center; font-family:monospace; font-size: 20px;" required>
-                <button type="submit" class="primary" style="margin-top:15px">Access Plan</button>
+                <input type="text" name="matrixId" placeholder="MFRX-XXXX" style="text-align:center; font-family:monospace; font-size: 24px; border-width: 2px;" required>
+                <button type="submit" class="primary" style="margin-top:20px">Access My Plan</button>
             </form>
         </div>
         <div id="patient-dashboard" style="display:none">
@@ -61,20 +65,27 @@
 
 <div id="modal-success" class="modal">
     <div class="modal-content">
-        <h3 style="color:green">Referral Sent!</h3>
-        <p>Prescription created successfully.</p>
-        <button onclick="closeSuccess()" class="primary">Continue</button>
+        <h2 style="color:var(--green); margin-top:0;">Referral Created</h2>
+        <p style="color:var(--gray)">The exercise prescription and secure access code have been generated.</p>
+        <button onclick="closeSuccess()" class="primary">Continue to Hand-off</button>
     </div>
 </div>
 
 <div id="modal-welcome" class="modal">
     <div class="modal-content">
-        <h3>Prescription Ready</h3>
-        <p>Access Code: <strong id="show-id" style="color:#2563eb; font-size:24px"></strong></p>
+        <h2 style="margin-top:0">Prescription Received</h2>
+        <p>Hello <span id="welcome-name" style="font-weight:bold"></span>, your code is:</p>
+        <div style="background:#f1f5f9; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <span id="show-id" style="color:var(--blue); font-size:32px; font-family:monospace; font-weight:900;"></span>
+        </div>
         <button onclick="closeWelcome()" class="primary">Open Dashboard</button>
     </div>
 </div>
 
-<script src="script.js?v=85"></script>
+<div id="modal-action" class="modal">
+    <div class="modal-content" id="action-content" style="text-align:left; max-width: 500px;"></div>
+</div>
+
+<script src="script.js?v=86"></script>
 </body>
 </html>
