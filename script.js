@@ -1,6 +1,5 @@
 /**
- * MoveFitRx Stable PoC - Build 7.5 (FULL WORKFLOW RESTORATION)
- * This build restores the clinical logic, LMN generation, and tab switching.
+ * MoveFitRx Stable PoC - Build 7.6 (FULL INTERACTIVE RESTORATION)
  */
 
 // --- 1. CORE DATA ---
@@ -20,65 +19,60 @@ const DIAGNOSES = [
     { id: 'HYPT', name: 'Hypertension', regimen: 'Cardio Vascular Health', code: 'I10' }
 ];
 
-let MOCK_CREDENTIALS = Array.from({length: 10}, (_, i) => ({ 
-    matrixId: `MFRX-ST0${i+1}`, 
-    gymAccessCode: `20510${i}`, 
-    used: false 
-}));
-
+let MOCK_CREDENTIALS = Array.from({length: 10}, (_, i) => ({ matrixId: `MFRX-ST0${i+1}`, gymAccessCode: `20510${i}`, used: false }));
 let REFERRED_PATIENTS = [];
 
 // --- 2. CORE FUNCTIONS ---
 function initializeState() {
     if (REFERRED_PATIENTS.length === 0) {
         const c1 = MOCK_CREDENTIALS[0]; c1.used = true;
-        REFERRED_PATIENTS.push({
-            name: 'Sarah Connor', email: 's.connor@sky.net', diagnosisId: 'HYPT',
-            regimenName: 'Cardio Vascular Health', matrixId: c1.matrixId,
-            gymAccessCode: c1.gymAccessCode, status: 'PAID', createdAt: Date.now() - 432000000
-        });
-
+        REFERRED_PATIENTS.push({ name: 'Sarah Connor', email: 's.connor@sky.net', diagnosisId: 'HYPT', regimenName: 'Cardio Vascular Health', matrixId: c1.matrixId, gymAccessCode: c1.gymAccessCode, status: 'PAID', createdAt: Date.now() - 432000000 });
         const c2 = MOCK_CREDENTIALS[1]; c2.used = true;
-        REFERRED_PATIENTS.push({
-            name: 'Jessica Jones', email: 'j.jones@alias.com', diagnosisId: 'OSTE',
-            regimenName: 'Bone Density & Balance', matrixId: c2.matrixId,
-            gymAccessCode: c2.gymAccessCode, status: 'PENDING_PAYMENT', createdAt: Date.now() - 172800000
-        });
+        REFERRED_PATIENTS.push({ name: 'Jessica Jones', email: 'j.jones@alias.com', diagnosisId: 'OSTE', regimenName: 'Bone Density & Balance', matrixId: c2.matrixId, gymAccessCode: c2.gymAccessCode, status: 'PENDING_PAYMENT', createdAt: Date.now() - 172800000 });
     }
 }
 
 function switchTab(tab) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
     const target = document.getElementById(`${tab}-panel`);
     if (target) target.classList.add('active');
-    
     const btn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
     if (btn) btn.classList.add('active');
+    if (tab === 'doctor') renderDoctorPatientList();
+}
 
-    if (tab === 'doctor') {
-        renderDoctorPatientList();
+// --- 3. MODAL & LMN LOGIC ---
+function showClinicianNotification(patient) {
+    const modal = document.getElementById('clinician-notification-modal');
+    const content = document.getElementById('clinician-notification-content');
+    if (modal && content) {
+        content.innerHTML = `
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-green-700 mb-2">Referral Successful!</h3>
+                <p class="text-gray-700 mb-4">Exercise prescription sent to <strong>${patient.name}</strong>.</p>
+                <div class="bg-blue-50 p-3 rounded text-sm text-blue-800">
+                    <strong>ID: ${patient.matrixId}</strong><br>
+                    Regimen: ${patient.regimenName}
+                </div>
+            </div>`;
+        modal.classList.remove('hidden');
     }
 }
 
+// --- 4. UI RENDERING ---
 function renderDoctorPatientList() {
     const list = document.getElementById('patients-list');
     if (!list) return;
-
     list.innerHTML = REFERRED_PATIENTS.map(p => {
         const dx = DIAGNOSES.find(d => d.id === p.diagnosisId);
         const color = p.status === 'PAID' ? 'border-green-500' : 'border-yellow-500';
-        const text = p.status === 'PAID' ? 'text-green-600' : 'text-yellow-600';
-        
-        // This makes the card clickable for the demo
         return `
             <div class="card bg-white border-l-4 ${color} p-4 mb-3 shadow-sm hover:bg-gray-50 cursor-pointer" 
-                 onclick="alert('Medically Necessary Regimen: ${dx.regimen}\\nID: ${p.matrixId}')">
+                 onclick="alert('Medically Necessary Regimen: ${p.regimenName}\\nICD-10: ${dx.code}')">
                 <p class="text-lg font-bold">${p.name}</p>
-                <p class="text-sm text-gray-600">DX: ${dx.name}</p>
-                <p class="text-xs font-bold ${text}">${p.status}</p>
-                <p class="text-xs text-gray-400 font-mono">CODE: ${p.matrixId}</p>
+                <p class="text-sm text-gray-600">${dx.name}</p>
+                <p class="text-xs font-bold ${p.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'}">${p.status}</p>
             </div>`;
     }).join('');
 }
@@ -92,11 +86,10 @@ function handleReferral(e) {
     e.preventDefault();
     const cred = MOCK_CREDENTIALS.find(c => !c.used);
     if (!cred) return alert("System out of credentials.");
-
+    
     cred.used = true;
     const dx = DIAGNOSES.find(d => d.id === e.target.diagnosis.value);
-
-    REFERRED_PATIENTS.unshift({
+    const newPatient = {
         name: e.target.name.value,
         email: e.target.email.value,
         diagnosisId: dx.id,
@@ -105,22 +98,27 @@ function handleReferral(e) {
         gymAccessCode: cred.gymAccessCode,
         status: 'PENDING_PAYMENT',
         createdAt: Date.now()
-    });
+    };
 
+    REFERRED_PATIENTS.unshift(newPatient);
     renderDoctorPatientList();
+    showClinicianNotification(newPatient); // This is the line that was breaking!
     e.target.reset();
-    alert("Referral Successful! Letter of Medical Necessity generated for patient " + REFERRED_PATIENTS[0].name);
 }
 
-// --- 3. INITIALIZATION ---
+// --- 5. INITIALIZATION ---
 function initializeApp() {
-    console.log("MoveFitRx System: FULL WORKFLOW RESTORED");
     initializeState();
     populateDiagnosisDropdown();
     renderDoctorPatientList();
-
     const form = document.getElementById('referral-form');
     if (form) form.addEventListener('submit', handleReferral);
+    
+    // Close modal listener
+    const closeBtn = document.getElementById('close-clinician-notification-btn');
+    if (closeBtn) {
+        closeBtn.onclick = () => document.getElementById('clinician-notification-modal').classList.add('hidden');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);
