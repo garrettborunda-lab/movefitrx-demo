@@ -507,32 +507,85 @@ function setupDoctorPortal() {
     
     // Initial render of the patient list
     renderDoctorPatientList();
-}
-
-
-// --- PATIENT PORTAL FUNCTIONS ---
-
 /**
  * Simulates a successful payment by updating the patient status in the local array.
  */
 function processPaymentSimulation(patientMatrixId) {
-    const patient = REFERRED_PATIENTS
+    const patient = getPatientByMatrixId(patientMatrixId);
+    if (patient) {
+        patient.status = 'PAID';
+        return true;
     }
-// --- REPLACE EVERYTHING FROM LINE 521 TO THE END WITH THIS ---
+    return false;
+}
+
+/**
+ * Switches between 'doctor' and 'patient' tabs.
+ */
+function switchTab(tab) {
+    stopAllObservers();
+    const panels = document.querySelectorAll('.panel');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    
+    panels.forEach(p => p.classList.remove('active'));
+    navButtons.forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(`${tab}-panel`).classList.add('active');
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+
+    if (tab === 'doctor') {
+        setupDoctorPortal();
+    }
+}
+
+/**
+ * Seeds the initial mock data (Sarah and Jessica) into the local array.
+ */
+function initializeState() {
+    if (REFERRED_PATIENTS.length === 0) {
+        const initialPatient1 = getAndMarkAvailableCredential();
+        const initialPatient2 = getAndMarkAvailableCredential();
+
+        REFERRED_PATIENTS.push({
+            name: 'Sarah Connor',
+            email: 's.connor@sky.net',
+            diagnosisId: 'HYPT',
+            regimenName: 'Cardio Vascular Health',
+            matrixId: initialPatient1.matrixId,
+            gymAccessCode: initialPatient1.gymAccessCode,
+            status: 'PAID',
+            createdAt: Date.now() - (86400000 * 5)
+        });
+
+        // Seed mock results so Sarah shows "In Progress"
+        PATIENT_RESULTS.push(
+            { patientMatrixId: initialPatient1.matrixId, exercise: 'Recumbent Bike', completedAt: new Date() }
+        );
+
+        REFERRED_PATIENTS.push({
+            name: 'Jessica Jones',
+            email: 'j.jones@alias.com',
+            diagnosisId: 'OSTE',
+            regimenName: 'Bone Density & Balance',
+            matrixId: initialPatient2.matrixId,
+            gymAccessCode: initialPatient2.gymAccessCode,
+            status: 'PENDING_PAYMENT',
+            createdAt: Date.now() - (86400000 * 2)
+        });
+    }
+}
 
 /**
  * Main initialization function to seed data and set up portals.
  */
 function initializeApp() {
     console.log("MoveFitRx: Initializing Build 7...");
-    initializeState(); // This is the function that creates Sarah and Jessica
-    setupDoctorPortal(); // This sets up the dropdown and the list
+    initializeState();
+    setupDoctorPortal();
 }
 
-// 1. Attach the main initialization function to the browser load event
+// Global Execution Hooks
 document.addEventListener('DOMContentLoaded', initializeApp);
-
-// 2. Expose necessary functions to the global 'window' object 
 window.switchTab = switchTab;
 window.handleReferral = handleReferral;
 window.DIAGNOSES = DIAGNOSES;
