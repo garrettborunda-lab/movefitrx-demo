@@ -531,7 +531,10 @@ function switchTab(tab) {
     navButtons.forEach(b => b.classList.remove('active'));
     
     document.getElementById(`${tab}-panel`).classList.add('active');
-    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    
+    // Find the button with the matching onclick attribute
+    const activeButton = document.querySelector(`[onclick="switchTab('${tab}')"]`);
+    if (activeButton) activeButton.classList.add('active');
 
     if (tab === 'doctor') {
         setupDoctorPortal();
@@ -546,32 +549,35 @@ function initializeState() {
         const initialPatient1 = getAndMarkAvailableCredential();
         const initialPatient2 = getAndMarkAvailableCredential();
 
-        REFERRED_PATIENTS.push({
-            name: 'Sarah Connor',
-            email: 's.connor@sky.net',
-            diagnosisId: 'HYPT',
-            regimenName: 'Cardio Vascular Health',
-            matrixId: initialPatient1.matrixId,
-            gymAccessCode: initialPatient1.gymAccessCode,
-            status: 'PAID',
-            createdAt: Date.now() - (86400000 * 5)
-        });
+        if (initialPatient1) {
+            REFERRED_PATIENTS.push({
+                name: 'Sarah Connor',
+                email: 's.connor@sky.net',
+                diagnosisId: 'HYPT',
+                regimenName: 'Cardio Vascular Health',
+                matrixId: initialPatient1.matrixId,
+                gymAccessCode: initialPatient1.gymAccessCode,
+                status: 'PAID',
+                createdAt: Date.now() - (86400000 * 5)
+            });
+            
+            PATIENT_RESULTS.push(
+                { patientMatrixId: initialPatient1.matrixId, machine: 'Treadmill', exercise: 'Aerobic Walk', completedAt: new Date() }
+            );
+        }
 
-        // Seed mock results so Sarah shows "In Progress"
-        PATIENT_RESULTS.push(
-            { patientMatrixId: initialPatient1.matrixId, exercise: 'Recumbent Bike', completedAt: new Date() }
-        );
-
-        REFERRED_PATIENTS.push({
-            name: 'Jessica Jones',
-            email: 'j.jones@alias.com',
-            diagnosisId: 'OSTE',
-            regimenName: 'Bone Density & Balance',
-            matrixId: initialPatient2.matrixId,
-            gymAccessCode: initialPatient2.gymAccessCode,
-            status: 'PENDING_PAYMENT',
-            createdAt: Date.now() - (86400000 * 2)
-        });
+        if (initialPatient2) {
+            REFERRED_PATIENTS.push({
+                name: 'Jessica Jones',
+                email: 'j.jones@alias.com',
+                diagnosisId: 'OSTE',
+                regimenName: 'Bone Density & Balance',
+                matrixId: initialPatient2.matrixId,
+                gymAccessCode: initialPatient2.gymAccessCode,
+                status: 'PENDING_PAYMENT',
+                createdAt: Date.now() - (86400000 * 2)
+            });
+        }
     }
 }
 
@@ -584,8 +590,11 @@ function initializeApp() {
     setupDoctorPortal();
 }
 
-// Global Execution Hooks
+// --- THE IGNITION SWITCH ---
+// This tells the browser to run the code after the HTML is ready.
 document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Expose functions to the global 'window' so HTML buttons can find them.
 window.switchTab = switchTab;
 window.handleReferral = handleReferral;
 window.DIAGNOSES = DIAGNOSES;
