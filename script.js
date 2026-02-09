@@ -1,9 +1,10 @@
 /**
- * MoveFitRx Build 8.17 - THE FULL RESTORATION
- * Source: Build 7 Clinical Engine
+ * MoveFitRx Build 8.19 - THE LMN RESTORATION
+ * SOURCE: Build 7 Base + Full Fidelity LMN & RWE Engine
+ * STABILITY: Safety-checked initialization to prevent "Null" errors.
  */
 
-// --- CLINICAL MODELS ---
+// --- 1. CORE DATA MODELS ---
 const CLINICIAN_DETAILS = {
     name: 'Dr. Jane Foster, MD',
     clinic: 'MoveFitRx Clinical Group',
@@ -22,7 +23,7 @@ const DIAGNOSES = [
     { id: 'HYPT', name: 'Hypertension', regimen: 'Cardio Vascular Health', code: 'I10' }
 ];
 
-const WORKOUT_DETAILS = {
+const MACHINE_PROTOCOLS = {
     'Hormonal Balance & Strength': [
         { machine: 'Recumbent Bike', activity: 'Low Intensity Cardio 25 min' },
         { machine: 'Leg Press', activity: '3 Sets x 12 Reps' },
@@ -43,34 +44,45 @@ let REFERRED_PATIENTS = [];
 let PATIENT_RESULTS = []; 
 let PENDING_PATIENT_DATA = null;
 
-// --- INITIALIZATION ---
+// --- 2. THE LMN GENERATOR (RESTORED) ---
+function generateLMNHTML(patient, dx) {
+    return `
+        <div class="lmn-paper" style="font-family:'Times New Roman', serif; padding:40px; border:1px solid #000; background:#fff; text-align:left; color:#000; line-height:1.5;">
+            <div style="text-align:center; border-bottom:2px solid #000; margin-bottom:20px; padding-bottom:10px;">
+                <h2 style="margin:0; font-weight:900;">LETTER OF MEDICAL NECESSITY</h2>
+                <p style="margin:0; font-size:12px;">MoveFitRx Clinical Oversight Program</p>
+            </div>
+            <p><strong>Date:</strong> ${CLINICIAN_DETAILS.date}</p>
+            <p><strong>Patient Name:</strong> ${patient.name}</p>
+            <p><strong>Clinical Diagnosis:</strong> ${dx.name} (ICD-10: ${dx.code})</p>
+            <p><strong>Referring Provider NPI:</strong> ${CLINICIAN_DETAILS.npi_type1}</p>
+            <p><strong>Prescribing Organization NPI:</strong> ${CLINICIAN_DETAILS.npi_type2}</p>
+            
+            <div style="margin-top:25px;">
+                <p>To Whom It May Concern,</p>
+                <p>I am writing to prescribe the MoveFitRx corrective exercise regimen for the patient listed above. This program is medically necessary for the treatment and management of their diagnosed condition.</p>
+                <p>The prescribed protocol requires 3 sessions per week for 12 weeks (36 total sessions) utilizing Matrix equipment with integrated biometric tracking for clinical oversight.</p>
+            </div>
+
+            <div style="margin-top:40px;">
+                <p><strong>Electronically Signed:</strong></p>
+                <p style="border-bottom:1px solid #000; display:inline-block; min-width:200px; font-style:italic; font-size:20px;">${CLINICIAN_DETAILS.name}</p>
+                <p style="margin-top:5px; font-size:12px;">${CLINICIAN_DETAILS.clinic}</p>
+            </div>
+        </div>
+        <button onclick="closeLMNModal()" class="w-full bg-blue-600 text-white p-4 font-black uppercase rounded-b-2xl">Close Document</button>`;
+}
+
+// --- 3. SYSTEM INITIALIZATION ---
 function initializeApp() {
-    // Seed Sarah & Jessica
-    REFERRED_PATIENTS.push({
-        name: 'Sarah Connor',
-        email: 's.connor@sky.net',
-        diagnosisId: 'HYPT',
-        regimenName: 'Cardio Vascular Health',
-        matrixId: 'MFRX-ST01',
-        gymCode: '205100',
-        status: 'PAID'
-    });
-
-    PATIENT_RESULTS.push(
-        { patientId: 'MFRX-ST01', machine: 'Treadmill', date: Date.now() - 86400000 },
-        { patientId: 'MFRX-ST01', machine: 'Seated Leg Curl', date: Date.now() - 172800000 },
-        { patientId: 'MFRX-ST01', machine: 'Treadmill', date: Date.now() - 259200000 }
-    );
-
-    REFERRED_PATIENTS.push({
-        name: 'Jessica Jones',
-        email: 'j.jones@alias.com',
-        diagnosisId: 'OSTE',
-        regimenName: 'Bone Density & Balance',
-        matrixId: 'MFRX-ST02',
-        gymCode: '205101',
-        status: 'PENDING'
-    });
+    if (REFERRED_PATIENTS.length === 0) {
+        REFERRED_PATIENTS.push(
+            { name: 'Sarah Connor', email: 's.connor@sky.net', diagnosisId: 'HYPT', regimenName: 'Cardio Vascular Health', matrixId: 'MFRX-ST01', gymCode: '205100', status: 'PAID' },
+            { name: 'Jessica Jones', email: 'j.jones@alias.com', diagnosisId: 'OSTE', regimenName: 'Bone Density & Balance', matrixId: 'MFRX-ST02', gymCode: '205101', status: 'PENDING' }
+        );
+        // Seed 3 workouts for Sarah (8% Adherence)
+        PATIENT_RESULTS.push({ id: 'MFRX-ST01' }, { id: 'MFRX-ST01' }, { id: 'MFRX-ST01' });
+    }
 
     const sel = document.getElementById('diagnosis-select');
     if (sel) sel.innerHTML = DIAGNOSES.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
@@ -78,35 +90,22 @@ function initializeApp() {
     renderClinicianPortal();
 }
 
-// --- CORE FUNCTIONS ---
-function switchTab(t) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-    
-    const panel = document.getElementById(t + '-panel');
-    if (panel) panel.classList.add('active');
-    
-    const tab = document.getElementById(t + '-tab');
-    if (tab) tab.classList.add('active');
-
-    if (t === 'doctor') renderClinicianPortal();
-}
-
+// --- 4. CORE PORTAL LOGIC ---
 function renderClinicianPortal() {
     const list = document.getElementById('patients-list');
     if (!list) return;
 
     list.innerHTML = REFERRED_PATIENTS.map(p => {
-        const results = PATIENT_RESULTS.filter(r => r.patientId === p.matrixId).length;
+        const results = PATIENT_RESULTS.filter(r => r.id === p.matrixId).length;
         const progress = Math.min((results / 36) * 100, 100);
         return `
             <div class="card bg-white p-5 rounded-2xl shadow-sm mb-4 border-l-4" style="border-left-color: ${p.status === 'PAID' ? '#059669' : '#f59e0b'}">
-                <div class="flex justify-between items-center mb-2">
-                    <strong class="text-gray-800">${p.name}</strong>
-                    <span class="text-[10px] font-black uppercase" style="color:${p.status === 'PAID' ? '#059669' : '#f59e0b'}">${p.status}</span>
+                <div class="flex justify-between items-center">
+                    <strong>${p.name}</strong>
+                    <span class="text-[10px] font-black" style="color:${p.status === 'PAID' ? '#059669' : '#f59e0b'}">${p.status}</span>
                 </div>
-                <div class="bg-gray-100 h-2 rounded-full overflow-hidden mb-2">
-                    <div class="bg-blue-600 h-full transition-all duration-1000" style="width:${progress}%"></div>
+                <div class="bg-gray-100 h-2 rounded-full overflow-hidden my-3">
+                    <div class="bg-blue-600 h-full" style="width:${progress}%"></div>
                 </div>
                 <div class="flex justify-between text-[10px] text-gray-400 font-mono">
                     <span>${p.matrixId}</span>
@@ -118,132 +117,91 @@ function renderClinicianPortal() {
 
 function handleLogin(e) {
     if (e) e.preventDefault();
-    const idInput = document.getElementById('matrix-id-input');
-    const p = REFERRED_PATIENTS.find(x => x.matrixId === idInput.value.toUpperCase());
+    const id = document.getElementById('matrix-id-input').value.toUpperCase();
+    const p = REFERRED_PATIENTS.find(x => x.matrixId === id);
     if (p) {
         document.getElementById('patient-search-form').style.display = 'none';
         document.getElementById('patient-data').classList.remove('hidden');
-        renderPatientDashboard(p);
+        renderPatientDash(p);
     } else { alert("Code not found."); }
 }
 
-function renderPatientDashboard(p) {
+function renderPatientDash(p) {
     const container = document.getElementById('patient-data');
-    const steps = WORKOUT_DETAILS[p.regimenName] || [];
-
+    const dx = DIAGNOSES.find(d => d.id === p.diagnosisId);
     if (p.status === 'PENDING') {
         container.innerHTML = `
-            <div class="card bg-white p-8 rounded-3xl shadow-xl border-t-8 border-blue-600">
-                <h3 class="text-xl font-bold mb-4">Prescription Ready</h3>
-                <button onclick="openLMNModal('${p.matrixId}')" class="w-full border-2 border-blue-600 text-blue-600 p-4 rounded-xl font-bold mb-4">View LMN</button>
-                <button onclick="showPaymentSim('${p.matrixId}')" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold uppercase shadow-lg">Pay with HSA (Binkey)</button>
+            <div class="card bg-white p-6 rounded-3xl border-t-8 border-blue-600 shadow-xl">
+                <h3 class="text-xl font-bold mb-2">Prescription Ready</h3>
+                <p class="text-gray-500 mb-6">${dx.regimen}</p>
+                <button onclick="openLMN('${p.matrixId}')" class="w-full border-2 border-blue-600 text-blue-600 p-4 rounded-xl font-bold mb-4">View LMN</button>
+                <button onclick="showBinkey('${p.matrixId}')" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold uppercase shadow-lg">Authorize Binkey HSA</button>
             </div>`;
     } else {
+        const protocols = MACHINE_PROTOCOLS[p.regimenName] || [];
         container.innerHTML = `
-            <div class="card bg-white p-8 rounded-3xl shadow-xl border-t-8 border-green-600 text-center">
+            <div class="card bg-white p-6 rounded-3xl border-t-8 border-green-600 shadow-xl text-center">
                 <h3 class="text-gray-400 uppercase text-xs font-bold mb-2">Matrix Code</h3>
-                <p class="text-4xl font-mono font-black mb-6">${p.gymCode}</p>
+                <p class="text-5xl font-black mb-6">${p.gymCode}</p>
                 <div class="text-left border-t pt-6">
-                    ${steps.map(s => `
+                    ${protocols.map(s => `
                         <div class="bg-gray-50 p-4 rounded-xl mb-3 border-l-4 border-blue-600">
                             <p class="font-bold text-sm">${s.machine}</p>
                             <p class="text-xs text-gray-500">${s.activity}</p>
-                            <button onclick="pushRWE('${p.matrixId}', '${s.machine}')" class="mt-2 text-[10px] bg-blue-600 text-white px-3 py-1 rounded-lg">Push Matrix Data</button>
-                        </div>
-                    `).join('')}
+                            <button onclick="pushRWE('${p.matrixId}', '${s.machine}')" class="mt-2 text-[10px] bg-blue-600 text-white px-3 py-1 rounded-lg">Log Matrix Data</button>
+                        </div>`).join('')}
                 </div>
             </div>`;
     }
 }
 
-function pushRWE(id, machine) {
-    PATIENT_RESULTS.unshift({ patientId: id, machine, date: Date.now() });
-    alert("Biometric data pushed to clinician.");
-    renderPatientDashboard(REFERRED_PATIENTS.find(x => x.matrixId === id));
-}
-
-function openLMNModal(id) {
+// --- 5. MODAL LOGIC ---
+function openLMN(id) {
     const p = REFERRED_PATIENTS.find(x => x.matrixId === id);
     const dx = DIAGNOSES.find(d => d.id === p.diagnosisId);
-    const content = document.getElementById('lmn-content-display');
-    content.innerHTML = `
-        <div style="font-family:serif; padding:30px; border:1px solid #000; background:#fff; text-align:left;">
-            <h2 style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px;">MEDICAL NECESSITY</h2>
-            <p><strong>Patient:</strong> ${p.name}</p>
-            <p><strong>ICD-10:</strong> ${dx.code}</p>
-            <p><strong>NPI (Referring):</strong> ${CLINICIAN_DETAILS.npi_type1}</p>
-            <p style="margin-top:20px; font-style:italic;">"MoveFitRx exercise is medically necessary for this patient's diagnosis."</p>
-            <p style="text-align:right; margin-top:20px;"><strong>${CLINICIAN_DETAILS.name}</strong></p>
-        </div>`;
-    document.getElementById('lmn-modal').classList.remove('hidden');
+    const display = document.getElementById('payment-modal-content') || document.getElementById('lmn-content-display');
+    if (display) {
+        display.innerHTML = generateLMNHTML(p, dx);
+        document.getElementById('payment-modal').classList.remove('hidden');
+    }
 }
 
-function showPaymentSim(id) {
-    const p = REFERRED_PATIENTS.find(x => x.matrixId === id);
-    const content = document.getElementById('payment-success-content');
-    content.innerHTML = `
-        <div class="p-6 text-center">
-            <h3 class="text-xl font-bold mb-2 text-blue-600">Binkey HSA Pay</h3>
-            <p class="text-sm text-gray-500 mb-6">Eligible HSA funds found for ICD-10 ${p.diagnosisId}</p>
-            <div class="bg-green-50 p-4 rounded-xl mb-6">
-                <span class="text-2xl font-bold text-green-600">$180.00</span>
+function showBinkey(id) {
+    const display = document.getElementById('payment-modal-content');
+    display.innerHTML = `
+        <div class="p-10 text-center">
+            <h3 class="text-2xl font-black mb-4">Binkey Gateway</h3>
+            <div class="bg-gray-100 p-6 rounded-3xl mb-6">
+                <p class="text-xs text-gray-400 font-bold uppercase">Approved HSA Amount</p>
+                <p class="text-3xl font-black text-green-600">$180.00</p>
             </div>
-            <button onclick="finalizePay('${id}')" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold">Process HSA</button>
+            <button onclick="finalizePay('${id}')" class="w-full bg-green-600 text-white p-5 rounded-2xl font-bold shadow-xl">Authorize Transfer</button>
         </div>`;
-    document.getElementById('payment-success-modal').classList.remove('hidden');
+    document.getElementById('payment-modal').classList.remove('hidden');
 }
 
 function finalizePay(id) {
     REFERRED_PATIENTS.find(x => x.matrixId === id).status = 'PAID';
-    document.getElementById('payment-success-modal').classList.add('hidden');
-    renderPatientDashboard(REFERRED_PATIENTS.find(x => x.matrixId === id));
+    document.getElementById('payment-modal').classList.add('hidden');
+    renderPatientDash(REFERRED_PATIENTS.find(x => x.matrixId === id));
 }
 
-// --- BINDING ---
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-    document.getElementById('referral-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = `MFRX-ST0${REFERRED_PATIENTS.length + 1}`;
-        const dx = DIAGNOSES.find(d => d.id === e.target.diagnosis.value);
-        const p = { 
-            name: e.target.name.value, 
-            email: e.target.email.value, 
-            diagnosisId: dx.id, 
-            regimenName: dx.regimen, 
-            matrixId: id, 
-            gymCode: '20510' + REFERRED_PATIENTS.length, 
-            status: 'PENDING' 
-        };
-        REFERRED_PATIENTS.unshift(p);
-        PENDING_PATIENT_DATA = p;
-        renderClinicianPortal();
-        
-        document.getElementById('clinician-notification-content').innerHTML = `<p class="p-6 text-center">Prescription for <b>${p.name}</b> generated.</p>`;
-        document.getElementById('clinician-notification-modal').classList.remove('hidden');
-        e.target.reset();
-    });
+function pushRWE(id, machine) {
+    PATIENT_RESULTS.push({ id });
+    alert(`RWE Synchronized: ${machine} data sent to Clinician.`);
+    renderPatientDash(REFERRED_PATIENTS.find(x => x.matrixId === id));
+}
 
-    document.getElementById('patient-search-form').addEventListener('submit', handleLogin);
-    
-    document.getElementById('close-clinician-notification-btn').onclick = () => {
-        document.getElementById('clinician-notification-modal').classList.add('hidden');
-        switchTab('patient');
-        document.getElementById('patient-welcome-content').innerHTML = `
-            <div class="p-6 text-center">
-                <h2 class="text-2xl font-bold mb-4">Code: ${PENDING_PATIENT_DATA.matrixId}</h2>
-                <p>Hello ${PENDING_PATIENT_DATA.name}, your medical regimen is ready.</p>
-            </div>`;
-        document.getElementById('patient-welcome-modal').classList.remove('hidden');
-    };
-});
-
-// --- GLOBAL EXPOSURE (FIXES THE REFERENCE ERROR) ---
-window.switchTab = switchTab;
+// --- 6. EVENT BRIDGES ---
+window.onload = initializeApp;
+window.switchTab = (t) => {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(t + '-panel').classList.add('active');
+    if (t === 'doctor') renderClinicianPortal();
+};
 window.handleLogin = handleLogin;
-window.openLMNModal = openLMNModal;
-window.showPaymentSim = showPaymentSim;
+window.openLMN = openLMN;
+window.showBinkey = showBinkey;
 window.finalizePay = finalizePay;
 window.pushRWE = pushRWE;
-window.closeLMNModal = () => document.getElementById('lmn-modal').classList.add('hidden');
-window.closePatientWelcomeModal = () => document.getElementById('patient-welcome-modal').classList.add('hidden');
+window.closeLMNModal = () => document.getElementById('payment-modal').classList.add('hidden');
