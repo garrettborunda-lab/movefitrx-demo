@@ -3,50 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoveFitRx PoC</title>
+    <title>MoveFitRx | Build 8.13</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <nav>
-        <button id="btn-doctor" onclick="switchTab('doctor')" class="active">Clinician</button>
-        <button id="btn-patient" onclick="switchTab('patient')">Patient</button>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-md flex justify-around sticky top-0 z-50">
+        <button id="btn-doctor" onclick="switchTab('doctor')" class="p-4 active uppercase text-xs font-bold">Clinician Portal</button>
+        <button id="btn-patient" onclick="switchTab('patient')" class="p-4 uppercase text-xs font-bold">Patient Portal</button>
     </nav>
 
-    <main>
+    <main class="max-w-xl mx-auto p-4">
         <div id="doctor-panel" class="panel active">
-            <div class="card" style="border-left-color: #2563eb;">
-                <h2 style="margin-top:0">Refer Patient</h2>
-                <form id="referral-form">
-                    <input type="text" id="ref-name" placeholder="Full Name" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;" required>
-                    <select id="diagnosis-select" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;"></select>
-                    <button type="submit" class="primary-btn">Issue Prescription</button>
+            <div class="card bg-white p-6 rounded-3xl shadow-lg mb-8">
+                <h2 class="text-xl font-black mb-4">Refer Patient</h2>
+                <form id="referral-form" class="space-y-3">
+                    <input type="text" id="ref-name" placeholder="Full Name" class="w-full p-3 border rounded-xl" required>
+                    <input type="email" id="ref-email" placeholder="Email Address" class="w-full p-3 border rounded-xl" required>
+                    <select id="diagnosis-select" class="w-full p-3 border rounded-xl font-bold text-gray-600"></select>
+                    <button type="submit" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold">Issue Prescription</button>
                 </form>
             </div>
-            <div id="patients-list"></div>
+            <div id="patients-list" class="space-y-4"></div>
         </div>
 
         <div id="patient-panel" class="panel">
-            <div id="login-box" class="card" style="text-align:center">
-                <h2>Secure Access</h2>
-                <input type="text" id="matrix-input" placeholder="MFRX-XXXX" style="width:100%; padding:15px; text-align:center; font-family:monospace; font-size:24px; border:1px solid #ddd; border-radius:12px; margin-bottom:15px;">
-                <button onclick="handleLogin()" class="primary-btn">Login</button>
+            <div id="login-box" class="bg-white p-8 rounded-3xl shadow-lg text-center">
+                <h2 class="text-2xl font-black mb-4">Secure Access</h2>
+                <input type="text" id="matrix-input" placeholder="MFRX-ST01" class="w-full p-4 border rounded-2xl text-center font-mono text-xl mb-4 uppercase">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold">Login</button>
             </div>
-            <div id="patient-dash" style="display:none"></div>
+            <div id="patient-dash" class="hidden mt-6">
+                <div id="patient-dashboard-content"></div>
+            </div>
         </div>
     </main>
 
-    <div id="modal-welcome" class="modal">
-        <div class="modal-content">
-            <h2>Welcome to MoveFitRx</h2>
-            <p>Your access code is: <strong id="show-id" style="color:#2563eb; font-size:24px"></strong></p>
-            <button onclick="closeWelcome()" class="primary-btn">Enter Dashboard</button>
+    <div id="modal-welcome" class="modal fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-[2.5rem] max-w-sm w-full text-center">
+            <h2 class="text-2xl font-black mb-2">Prescription Sent</h2>
+            <p class="text-gray-500 mb-6 font-mono text-xl" id="show-id"></p>
+            <button onclick="closeWelcome()" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold">Open Dashboard</button>
         </div>
     </div>
 
-    <div id="modal-action" class="modal">
-        <div class="modal-content" id="action-content"></div>
+    <div id="modal-action" class="modal fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden" id="action-content"></div>
     </div>
-
-    <script src="script.js?v=8.11"></script>
 </body>
 </html>
